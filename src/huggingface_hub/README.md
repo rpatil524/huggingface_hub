@@ -2,57 +2,16 @@
 
 ## Download files from the Hub
 
-Three utility functions are provided to dowload files from the Hub. One
-advantage of using them is that files are cached locally, so you won't have to
+The `hf_hub_download()` function is the main function to download files from the Hub. One
+advantage of using it is that files are cached locally, so you won't have to
 download the files multiple times. If there are changes in the repository, the
 files will be automatically downloaded again.
 
-### `hf_hub_url`
-
-`hf_hub_url()` returns the url we'll use to download the actual files:
-`https://huggingface.co/julien-c/EsperBERTo-small/resolve/main/pytorch_model.bin`
-
-Parameters:
-- a `repo_id` (a user or organization name and a repo name seperated by a `/`, like `julien-c/EsperBERTo-small`)
-- a `filename` (like `pytorch_model.bin`)
-- an optional `subfolder`, corresponding to a folder inside the model repo
-- an optional `repo_type`, such as `dataset` or `space`
-- an optional Git revision id (can be a branch name, a tag, or a commit hash)
-
-If you check out this URL's headers with a `HEAD` http request (which you can do
-from the command line with `curl -I`) for a few different files, you'll see
-that:
-- small files are returned directly
-- large files (i.e. the ones stored through
-  [git-lfs](https://git-lfs.github.com/)) are returned via a redirect to a
-  Cloudfront URL. Cloudfront is a Content Delivery Network, or CDN, that ensures
-  that downloads are as fast as possible from anywhere on the globe.
-
-### `cached_download`
-
-`cached_download()` takes the following parameters, downloads the remote file,
-stores it to disk (in a versioning-aware way) and returns its local file path.
-
-Parameters:
-- a remote `url`
-- a `cache_dir` which you can specify if you want to control where on disk the
-  files are cached.
-
-A common use case is to download the files from a download url
-
-```python
-from huggingface_hub import hf_hub_url, cached_download
-config_file_url = hf_hub_url("lysandre/arxiv-nlp", filename="config.json")
-cached_download(config_file_url)
-```
-
-Check out the [source code](https://github.com/huggingface/huggingface_hub/blob/main/src/huggingface_hub/file_download.py) and search for `cached_download` for all possible params (we'll create a real doc page
-in the future).
 
 ### `hf_hub_download`
 
-Since the use case of combining `hf_hub_url()` and `cached_download()` is very
-common, we also provide a wrapper that calls both functions.
+The function takes the following parameters, downloads the remote file,
+stores it to disk (in a version-aware way) and returns its local file path.
 
 Parameters:
 - a `repo_id` (a user or organization name and a repo name, separated by `/`, like `julien-c/EsperBERTo-small`)
@@ -68,7 +27,7 @@ hf_hub_download("lysandre/arxiv-nlp", filename="config.json")
 
 ### `snapshot_download`
 
-Using `hf_hub_download()` works well when you have a fixed repository structure;
+Using `hf_hub_download()` works well when you know which files you want to download;
 for example a model file alongside a configuration file, both with static names.
 There are cases in which you will prefer to download all the files of the remote
 repository at a specified revision. That's what `snapshot_download()` does. It
@@ -81,32 +40,54 @@ Parameters:
 - a `cache_dir` which you can specify if you want to control where on disk the
   files are cached
 
+### `hf_hub_url`
+
+Internally, the library uses `hf_hub_url()` to return the URL to download the actual files:
+`https://huggingface.co/julien-c/EsperBERTo-small/resolve/main/pytorch_model.bin`
+
+
+Parameters:
+- a `repo_id` (a user or organization name and a repo name separated by a `/`, like `julien-c/EsperBERTo-small`)
+- a `filename` (like `pytorch_model.bin`)
+- an optional `subfolder`, corresponding to a folder inside the model repo
+- an optional `repo_type`, such as `dataset` or `space`
+- an optional Git revision id (can be a branch name, a tag, or a commit hash)
+
+If you check out this URL's headers with a `HEAD` http request (which you can do
+from the command line with `curl -I`) for a few different files, you'll see
+that:
+- small files are returned directly
+- large files (i.e. the ones stored through
+  [git-lfs](https://git-lfs.github.com/)) are returned via a redirect to a
+  Cloudfront URL. Cloudfront is a Content Delivery Network, or CDN, that ensures
+  that downloads are as fast as possible from anywhere on the globe.
+
 <br>
 
 ## Publish files to the Hub
 
 If you've used Git before, this will be very easy since Git is used to manage
 files in the Hub. You can find a step-by-step guide on how to upload your model
-to the Hub: https://huggingface.co/docs/hub/adding-a-model. 
+to the Hub: https://huggingface.co/docs/hub/adding-a-model.
 
 
 ### API utilities in `hf_api.py`
 
-You don't need them for the standard publishing workflow, however, if you need a
+You don't need them for the standard publishing workflow (ie. using git command line), however, if you need a
 programmatic way of creating a repo, deleting it (`⚠️ caution`), pushing a
 single file to a repo or listing models from the Hub, you'll find helpers in
 `hf_api.py`. Some example functionality available with the `HfApi` class:
 
-* `login()`
 * `whoami()`
-* `logout()`
 * `create_repo()`
 * `list_repo_files()`
 * `list_repo_objects()`
 * `delete_repo()`
-* `update_repo_visibility()`
+* `update_repo_settings()`
+* `create_commit()`
 * `upload_file()`
 * `delete_file()`
+* `delete_folder()`
 
 Those API utilities are also exposed through the `huggingface-cli` CLI:
 
@@ -117,7 +98,7 @@ huggingface-cli whoami
 huggingface-cli repo create
 ```
 
-With the `HfApi` class there are methods to query models, datasets, and metrics by specific tags (e.g. if you want to list models compatible with your library):
+With the `HfApi` class there are methods to query models, datasets, and Spaces by specific tags (e.g. if you want to list models compatible with your library):
 - **Models**:
   - `list_models()`
   - `model_info()`
@@ -126,11 +107,14 @@ With the `HfApi` class there are methods to query models, datasets, and metrics 
   - `list_datasets()`
   - `dataset_info()`
   - `get_dataset_tags()`
-  
-These lightly wrap around the API Endpoints. Documentation for valid parameters and descriptions can be found [here](https://huggingface.co/docs/hub/endpoints).
-  
+- **Spaces**:
+  - `list_spaces()`
+  - `space_info()`
 
-### Advanced programmatic repository management 
+These lightly wrap around the API Endpoints. Documentation for valid parameters and descriptions can be found [here](https://huggingface.co/docs/hub/endpoints).
+
+
+### Advanced programmatic repository management
 
 The `Repository` class helps manage both offline Git repositories and Hugging
 Face Hub repositories. Using the `Repository` class requires `git` and `git-lfs`
@@ -162,18 +146,18 @@ will clone that repository:
 If the repository you're cloning is one of yours or one of your organisation's,
 then having the ability to commit and push to that repository is important. In
 order to do that, you should make sure to be logged-in using `huggingface-cli
-login`, and to have the `use_auth_token` parameter set to `True` (the default)
+login`, and to have the `token` parameter set to `True` (the default)
 when  instantiating the `Repository` object:
 
 ```python
->>> repo = Repository("my-model", clone_from="<user>/<model_id>", use_auth_token=True)
+>>> repo = Repository("my-model", clone_from="<user>/<model_id>", token=True)
 ```
 
 This works for models, datasets and spaces repositories; but you will need to
 explicitely specify the type for the last two options:
 
 ```python
->>> repo = Repository("my-dataset", clone_from="<user>/<dataset_id>", use_auth_token=True, repo_type="dataset")
+>>> repo = Repository("my-dataset", clone_from="<user>/<dataset_id>", token=True, repo_type="dataset")
 ```
 
 You can also change between branches:
@@ -197,9 +181,9 @@ who will be the author of the commits:
 
 ```python
 >>> repo = Repository(
-...   "my-dataset", 
-...   clone_from="<user>/<dataset_id>", 
-...   use_auth_token=True, 
+...   "my-dataset",
+...   clone_from="<user>/<dataset_id>",
+...   token=True,
 ...   repo_type="dataset",
 ...   git_user="MyName",
 ...   git_email="me@cool.mail"
@@ -217,7 +201,7 @@ traditional Git methods:
 - `git_checkout(branch)`
 
 The `git_push` method has a parameter `blocking` which is `True` by default. When set to `False`, the push will
-happen behind the scenes - which can be helpful if you would like your script to continue on while the push is 
+happen behind the scenes - which can be helpful if you would like your script to continue on while the push is
 happening.
 
 LFS-tracking methods:
@@ -242,7 +226,7 @@ These two methods also have support for the `blocking` parameter.
 
 Examples using the `commit` context manager:
 ```python
->>> with Repository("text-files", clone_from="<user>/text-files", use_auth_token=True).commit("My first file :)"):
+>>> with Repository("text-files", clone_from="<user>/text-files", token=True).commit("My first file :)"):
 ...     with open("file.txt", "w+") as f:
 ...         f.write(json.dumps({"hey": 8}))
 ```
@@ -250,7 +234,7 @@ Examples using the `commit` context manager:
 ```python
 >>> import torch
 >>> model = torch.nn.Transformer()
->>> with Repository("torch-model", clone_from="<user>/torch-model", use_auth_token=True).commit("My cool model :)"):
+>>> with Repository("torch-model", clone_from="<user>/torch-model", token=True).commit("My cool model :)"):
 ...     torch.save(model.state_dict(), "model.pt")
   ```
 
@@ -275,7 +259,7 @@ with repo.commit("Commit message", blocking=False):
 last_command = repo.command_queue[-1]
 
 # Status of the push command
-last_command.status  
+last_command.status
 # Will return the status code
 #     -> -1 will indicate the push is still ongoing
 #     -> 0 will indicate the push has completed successfully
@@ -297,8 +281,8 @@ if other errors happen in your script (a failed push counts as done).
 
 ### Need to upload very large (>5GB) files?
 
-To upload large files (>5GB 🔥), you need to install the custom transfer agent
-for git-lfs, bundled in this package. 
+To upload large files (>5GB 🔥) from git command-line, you need to install the custom transfer agent
+for git-lfs, bundled in this package.
 
 To install, just run:
 
@@ -372,4 +356,3 @@ API.
 ```python
 inference = InferenceApi("bert-base-uncased", task="feature-extraction", token=API_TOKEN)
 ```
-
