@@ -16,69 +16,30 @@ limitations under the License.
 
 # How to contribute to huggingface_hub, the GitHub repository?
 
-Everyone is welcome to contribute, and we value everybody's contribution. Code
-is thus not the only way to help the community. Answering questions, helping
-others, reaching out and improving the documentations are immensely valuable to
-the community.
+Everyone is welcome to contribute, and we value everybody's contribution. Code is not the only way to help the community.
+Answering questions, helping others, reaching out and improving the documentations are immensely valuable to the community.
 
 It also helps us if you spread the word: reference the library from blog posts
 on the awesome projects it made possible, shout out on Twitter every time it has
 helped you, or simply star the repo to say "thank you".
 
 Whichever way you choose to contribute, please be mindful to respect our
-[code of conduct](https://github.com/huggingface/huggingface_hub/blob/master/CODE_OF_CONDUCT.md).
+[code of conduct](https://github.com/huggingface/huggingface_hub/blob/main/CODE_OF_CONDUCT.md).
 
-## You can contribute in so many ways!
-
-The repository is split into different parts, where we welcome contributions.
-
-What can you find in this repo?
-
-* [`huggingface_hub`](https://github.com/huggingface/huggingface_hub/tree/main/src/huggingface_hub), a client library to download and publish on the Hugging Face Hub as well as extracting useful information from there.
-* [`api-inference-community`](https://github.com/huggingface/huggingface_hub/tree/main/api-inference-community), the Inference API for open source machine learning libraries.
-* [`js`](https://github.com/huggingface/huggingface_hub/tree/main/js), the open sourced widgets that allow people to try out the models in the browser.
-  * [`interfaces`](https://github.com/huggingface/huggingface_hub/tree/main/js/src/lib/interfaces), Typescript definition files for the Hugging Face Hub.
-* [`docs`](https://github.com/huggingface/huggingface_hub/tree/main/docs), containing the official [Hugging Face Hub documentation](https://hf.co/docs).
-
+> Looking for a good first issue to work on?
+> Please check out our contributing guide below and then select an issue from our [curated list](https://github.com/huggingface/huggingface_hub/contribute).
+> Pick one and get started with it!
 
 ### The client library, `huggingface_hub`
 
-This repository hosts the client library `huggingface_hub`, which is a frontend to the Hugging Face Hub.
-this part lives in `src/huggingface_hub` and `tests`.
+This repository hosts the `huggingface_hub`, the client library that interfaces any Python script with the Hugging Face Hub.
+Its implementation lives in `src/huggingface_hub`, while the tests are located in `tests/`.
 
 There are many ways you can contribute to this client library:
-* Fixing outstanding issues with the existing code;
-* Contributing to the examples or to the documentation;
-* Submitting issues related to bugs or desired new features.
 
-### The community inference API
-
-The `api-inference-community` folder contains a tool to enable third-party library support integrated with the Hugging
-Face Hub.
-
-We welcome contributions to [add new containers](https://huggingface.co/docs/hub/adding-a-library#set-up-the-inference-api) for new libraries, to update the existing ones, and to provide help
-fixing bugs and adding features. This folder contains an additional README
-file explaining how you may test your code.
-
-## JavaScript content
-
-The `js` folder contains the JavaScript code of the Hub. It includes:
-* The widgets ([code](https://github.com/huggingface/huggingface_hub/tree/main/js/src/lib/components/InferenceWidget)
-* Code snippets to make inference calls ([code](https://github.com/huggingface/huggingface_hub/tree/main/js/src/lib/inferenceSnippets)
-* Code snippets to load models ([code](https://github.com/huggingface/huggingface_hub/blob/main/js/src/lib/interfaces/Libraries.ts))
-
-Here too, we welcome any logic and documentation contributions. This folder contains an additional README
-file explaining how you may test your code.
-
-## Documentation
-
-The content in the `docs` folder is the official [Hugging Face Hub documentation]. It is not limited to the
-Python package `huggingface_hub`, as it includes guides on using the frontend, ho to build Spaces, how to search
-efficiently, and others.
-
-Here too, we welcome contribution, may it be for syntactic changes or typos.
-
-*All contributions are equally valuable to the community.*
+- Fixing outstanding issues with the existing code;
+- Contributing to the examples or to the documentation;
+- Submitting issues related to bugs or desired new features.
 
 ## Submitting a new issue or feature request
 
@@ -88,7 +49,7 @@ feedback.
 
 ### Did you find a bug?
 
-The 🤗 Hugging Face Hub library is robust and reliable thanks to the users who notify us of
+The `huggingface_hub` library is robust and reliable thanks to the users who notify us of
 the problems they encounter. So thank you for reporting an issue.
 
 First, we would really appreciate it if you could **make sure the bug was not
@@ -96,31 +57,29 @@ already reported** (use the search bar on Github under Issues).
 
 Did not find it? :( So we can act quickly on it, please follow these steps:
 
-* Include your **OS type and version**, the versions of **Python**, **PyTorch** and
-  **Tensorflow** when applicable;
-* A short, self-contained, code snippet that allows us to reproduce the bug in
-  less than 30s;
-* Provide the *full* traceback if an exception is raised by copying the text from your terminal
-  in the issue description.
+- A short, self-contained, code snippet that allows us to reproduce the bug in less than 30s;
+- Provide the _full_ traceback if an exception is raised by copying the text from your terminal in the issue description.
+- Include information about your local setup. You can dump this information by running `huggingface-cli env` in your terminal;
 
 ### Do you want a new feature?
 
 A good feature request addresses the following points:
 
 1. Motivation first:
-* Is it related to a problem/frustration with the library? If so, please explain
+
+- Is it related to a problem/frustration with the library? If so, please explain
   why and provide a code snippet that demonstrates the problem best.
-* Is it related to something you would need for a project? We'd love to hear
+- Is it related to something you would need for a project? We'd love to hear
   about it!
-* Is it something you worked on and think could benefit the community?
+- Is it something you worked on and think could benefit the community?
   Awesome! Tell us what problem it solved for you.
-2. Write a *full paragraph* describing the feature;
+
+2. Write a _full paragraph_ describing the feature;
 3. Provide a **code snippet** that demonstrates its future use;
 4. In case this is related to a paper, please attach a link;
 5. Attach any additional information (drawings, screenshots, etc.) you think may help.
 
-If your issue is well written we're already 80% of the way there by the time you
-post it.
+If your issue is well written, we're already 80% of the way there by the time you post it!
 
 ## Submitting a pull request (PR)
 
@@ -151,7 +110,7 @@ Follow these steps to start contributing:
 
 3. Create a new branch to hold your development changes, and do this for every new PR you work on.
 
-   Start by synchronizing your `main` branch with the `upstream/main` branch (ore details in the [GitHub Docs](https://docs.github.com/en/github/collaborating-with-issues-and-pull-requests/syncing-a-fork)):
+   Start by synchronizing your `main` branch with the `upstream/main` branch (more details in the [GitHub Docs](https://docs.github.com/en/github/collaborating-with-issues-and-pull-requests/syncing-a-fork)):
 
    ```bash
    $ git checkout main
@@ -165,73 +124,72 @@ Follow these steps to start contributing:
    $ git checkout -b a-descriptive-name-for-my-changes
    ```
 
-   **Do not** work on the `master` branch.
+   **Do not** work on the `main` branch.
 
-4. Set up a development environment by running the following command in a virtual environment a conda or a
-   virtual environment you've created for working on this library:
-
-   ```bash
-   $ pip install -e ".[dev]"
-   ```
-
-   (If huggingface_hub was already installed in the virtual environment, remove
-   it with `pip uninstall huggingface_hub` before reinstalling it in editable
-   mode with the `-e` flag.)
-
-5. Develop the features on your branch.
-
-   As you work on the features, you should make sure that the test suite
-   passes. You should run the tests impacted by your changes like this (see
-   below an explanation regarding the environment variable):
+4. Set up a development environment by running the following command in a [virtual environment](https://docs.python.org/3/library/venv.html#creating-virtual-environments) or a conda environment you've created for working on this library:
 
    ```bash
-   $ HUGGINGFACE_CO_STAGING=1 pytest tests/<TEST_TO_RUN>.py
+   $ pip uninstall huggingface_hub # make sure huggingface_hub is not already installed
+   $ pip install -e ".[dev]" # install in editable (-e) mode
    ```
 
-   > For the following commands leveraging the `make` utility, we recommend using the WSL system when running on
+5. Develop the features on your branch
+
+6. Test your implementation!
+
+   To make a good Pull Request you must test the features you have added.
+   To do so, we use the `unittest` framework and run them using `pytest`:
+
+   ```bash
+   $ pytest tests -k <TEST_NAME>
+   # or
+   $ pytest tests/<TEST_FILE>.py
+   ```
+
+7. Format your code.
+
+   `huggingface_hub` relies on [`ruff`](https://github.com/astral-sh/ruff) to format its source code consistently. You
+   can apply automatic style corrections and code verifications with the following command:
+
+   ```bash
+   $ make style
+   ```
+
+   This command will update your code to comply with the standards of the `huggingface_hub` repository. A few custom
+   scripts are also run to ensure consistency. Once automatic style corrections have been applied, you must test that
+   it passes the quality checks:
+
+   ```bash
+   $ make quality
+   ```
+
+   Compared to `make style`, `make quality` will never update your code. In addition to the previous code formatter, it
+   also runs [`mypy`](https://github.com/python/mypy) to check for static typing issues. All those tests will also run
+   in the CI once you open your PR but it is recommended to run them locally in order to iterate faster.
+
+   > For the commands leveraging the `make` utility, we recommend using the WSL system when running on
    > Windows. More information [here](https://docs.microsoft.com/en-us/windows/wsl/about).
 
-   You can also run the full suite with the following command.
-
-   ```bash
-   $ make test
-   ```
-
-   `hugginface_hub` relies on `black` and `isort` to format its source code
-   consistently. You can install pre-commit hooks so that these styles are
-   applied and checked on files that you have touched in each commit:
+8. (optional) Alternatively, you can install pre-commit hooks so that these styles are applied and checked on files
+   that you have touched in each commit:
 
    ```bash
    pip install pre-commit
    pre-commit install
    ```
 
-   You only need to do the above once in your repository's environment. If for
-   any reason you would like to disable pre-commit hooks on a commit, you can
-   pass `-n` to your `git commit` command to temporarily disable pre-commit
+   You only need to do the above once in your repository's environment. If for any reason you would like to disable
+   pre-commit hooks on a commit, you can pass `-n` to your `git commit` command to temporarily disable pre-commit
    hooks.
 
    To permanently disable hooks, you can run the following command:
+
    ```bash
    pre-commit uninstall
    ```
 
-   Alternatively, you can apply automatic style corrections and code
-   verifications manually with the following command:
-
-   ```bash
-   $ make style
-   ```
-
-   `huggingface_hub` also uses `flake8` and a few custom scripts to check for coding mistakes. Quality
-   control runs in CI, however you can also run the same checks with:
-
-   ```bash
-   $ make quality
-   ```
-
-   Once you're happy with your changes, add changed files using `git add` and
-   make a commit with `git commit` to record your changes locally:
+9. Once you're happy with your changes, add changed files using `git add` and make a commit with `git commit` to record
+   your changes locally:
 
    ```bash
    $ git add modified_file.py
@@ -241,14 +199,13 @@ Follow these steps to start contributing:
    Please write [good commit messages](https://chris.beams.io/posts/git-commit/).
 
    It is a good idea to sync your copy of the code with the original
-   repository regularly. The following document covers it in length: [github documentation](
-   https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/working-with-forks/syncing-a-fork)
+   repository regularly. The following document covers it in length: [github documentation](https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/working-with-forks/syncing-a-fork)
 
    And here's how you can do it quickly from your `git` commandline:
 
    ```bash
    $ git fetch upstream
-   $ git rebase upstream/master
+   $ git rebase upstream/main
    ```
 
    Push the changes to your account using:
@@ -257,15 +214,16 @@ Follow these steps to start contributing:
    $ git push -u origin a-descriptive-name-for-my-changes
    ```
 
-7. Once you are satisfied (**and the checklist below is happy too**), go to the
-   webpage of your fork on GitHub. Click on 'Pull request' to send your changes
-   to the project maintainers for review.
+10. Once you are satisfied (**and the [checklist below](https://github.com/huggingface/huggingface_hub/blob/main/CONTRIBUTING.md#checklist)
+    is happy too**), go to the webpage of your fork on GitHub. Click on 'Pull request' to send your changes to the project maintainers for review.
 
-8. It's ok if maintainers ask you for changes. It happens to core contributors
-   too! So everyone can see the changes in the Pull request, work in your local
-   branch and push the changes to your fork. They will automatically appear in
-   the pull request.
+11. It's ok if maintainers ask you for changes. It happens all the time to core contributors
+    too! So everyone can see the changes in the Pull request, work in your local
+    branch and push the changes to your fork. They will automatically appear in
+    the pull request.
 
+12. Once your changes have been approved, one of the project maintainers will
+    merge your pull request for you. Good job!
 
 ### Checklist
 
@@ -289,29 +247,23 @@ Follow these steps to start contributing:
 An extensive test suite is included to test the library behavior and several examples. Library tests can be found in
 the [tests folder](https://github.com/huggingface/huggingface_hub/tree/main/tests).
 
-The `huggingface_hub` library's normal behavior is to work with the production Hugging Face Hub. However,
-for tests, we prefer to run on a staging version. In order to do this, it's important to set the
-`HUGGINGFACE_CO_STAGING` environment variable to `1` when running tests. It is preferred to pass this in when running the tests, than setting a permanent environmental variable, as shown below.
-
-We use `pytest` in order to run the tests for the library . From the root of the
-repository they can be run with the following:
+We use `pytest` in order to run the tests for the library.
+From the root of the repository they can be run with the following:
 
 ```bash
-$ HUGGINGFACE_CO_STAGING=1 python -m pytest -sv ./tests
+$ python -m pytest ./tests
+```
 
-In fact, that's how `make test` is implemented (sans the `pip install` line)!
+You can specify a smaller set of tests in order to test only the feature you're working on.
 
-You can specify a smaller set of tests in order to test only the feature
-you're working on.
-
-For example, the following will only run the tests hel in the `test_repository.py` file:
+For example, the following will only run the tests in the `test_repository.py` file:
 
 ```bash
-$ HUGGINGFACE_CO_STAGING=1 python -m pytest -sv ./tests/test_repository.py
+$ python -m pytest ./tests/test_repository.py
 ```
 
 And the following will only run the tests that include `tag` in their name:
 
 ```bash
-$ HUGGINGFACE_CO_STAGING=1 python -m pytest -sv ./tests -k tag
+$ python -m pytest ./tests -k tag
 ```

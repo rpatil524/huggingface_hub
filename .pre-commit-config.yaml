@@ -1,23 +1,18 @@
 repos:
--   repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.1.0
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.5.0
     hooks:
-    -   id: check-yaml
-        exclude: .github/conda/meta.yaml
-    -   id: end-of-file-fixer
-    -   id: trailing-whitespace
-    -   id: check-case-conflict
-    -   id: check-merge-conflict
--   repo: https://github.com/psf/black
-    rev: 22.3.0
+      - id: check-yaml
+        exclude: .github/conda/meta.yaml|tests/cassettes/
+      - id: end-of-file-fixer
+      - id: trailing-whitespace
+      - id: check-case-conflict
+      - id: check-merge-conflict
+  - repo: https://github.com/charliermarsh/ruff-pre-commit # https://github.com/charliermarsh/ruff#usage
+    rev: v0.1.13
     hooks:
-    -   id: black
--   repo: https://gitlab.com/pycqa/flake8
-    rev: 4.0.1
+      - id: ruff
+  - repo: https://github.com/pappasam/toml-sort
+    rev: v0.23.1
     hooks:
-    -   id: flake8
-        types: [file, python]
--   repo: https://github.com/PyCQA/isort
-    rev: 5.10.1
-    hooks:
-    -   id: isort
+      - id: toml-sort-fix
