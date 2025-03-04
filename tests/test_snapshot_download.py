@@ -1,82 +1,68 @@
 import os
-import shutil
-import tempfile
-import time
 import unittest
+from pathlib import Path
+from unittest.mock import patch
 
-import requests
-from huggingface_hub import HfApi, Repository
-from huggingface_hub.hf_api import HfFolder
-from huggingface_hub.snapshot_download import snapshot_download
-from huggingface_hub.utils import logging
+from huggingface_hub import CommitOperationAdd, HfApi, snapshot_download
+from huggingface_hub.errors import LocalEntryNotFoundError, RepositoryNotFoundError
+from huggingface_hub.utils import SoftTemporaryDirectory
 
-from .testing_constants import ENDPOINT_STAGING, TOKEN, USER
-from .testing_utils import retry_endpoint, set_write_permission_and_retry
-
-
-logger = logging.get_logger(__name__)
-
-REPO_NAME = "dummy-hf-hub-{}".format(int(time.time() * 10e3))
+from .testing_constants import TOKEN
+from .testing_utils import OfflineSimulationMode, offline, repo_name
 
 
 class SnapshotDownloadTests(unittest.TestCase):
-    _api = HfApi(endpoint=ENDPOINT_STAGING)
-
     @classmethod
     def setUpClass(cls):
         """
         Share this valid token in all tests below.
         """
-        cls._token = TOKEN
-        cls._api.set_access_token(TOKEN)
+        cls.api = HfApi(token=TOKEN)
+        cls.repo_id = cls.api.create_repo(repo_name("snapshot-download")).repo_id
 
-    @retry_endpoint
-    def setUp(self) -> None:
-        if os.path.exists(REPO_NAME):
-            shutil.rmtree(REPO_NAME, onerror=set_write_permission_and_retry)
-        logger.info(f"Does {REPO_NAME} exist: {os.path.exists(REPO_NAME)}")
-        repo = Repository(
-            REPO_NAME,
-            clone_from=f"{USER}/{REPO_NAME}",
-            use_auth_token=self._token,
-            git_user="ci",
-            git_email="ci@dummy.com",
-        )
+        # First commit on `main`
+        cls.first_commit_hash = cls.api.create_commit(
+            repo_id=cls.repo_id,
+            operations=[
+                CommitOperationAdd(path_in_repo="dummy_file.txt", path_or_fileobj=b"v1"),
+                CommitOperationAdd(path_in_repo="subpath/file.txt", path_or_fileobj=b"content in subpath"),
+            ],
+            commit_message="Add file to main branch",
+        ).oid
 
-        with repo.commit("Add file to main branch"):
-            with open("dummy_file.txt", "w+") as f:
-                f.write("v1")
+        # Second commit on `main`
+        cls.second_commit_hash = cls.api.create_commit(
+            repo_id=cls.repo_id,
+            operations=[
+                CommitOperationAdd(path_in_repo="dummy_file.txt", path_or_fileobj=b"v2"),
+                CommitOperationAdd(path_in_repo="dummy_file_2.txt", path_or_fileobj=b"v3"),
+            ],
+            commit_message="Add file to main branch",
+        ).oid
 
-        self.first_commit_hash = repo.git_head_hash()
+        # Third commit on `other`
+        cls.api.create_branch(repo_id=cls.repo_id, branch="other")
+        cls.third_commit_hash = cls.api.create_commit(
+            repo_id=cls.repo_id,
+            operations=[
+                CommitOperationAdd(path_in_repo="dummy_file_2.txt", path_or_fileobj=b"v4"),
+            ],
+            commit_message="Add file to other branch",
+            revision="other",
+        ).oid
 
-        with repo.commit("Add file to main branch"):
-            with open("dummy_file.txt", "w+") as f:
-                f.write("v2")
-            with open("dummy_file_2.txt", "w+") as f:
-                f.write("v3")
-
-        self.second_commit_hash = repo.git_head_hash()
-
-        with repo.commit("Add file to other branch", branch="other"):
-            with open("dummy_file_2.txt", "w+") as f:
-                f.write("v4")
-
-        self.third_commit_hash = repo.git_head_hash()
-
-    def tearDown(self) -> None:
-        self._api.delete_repo(repo_id=REPO_NAME, token=self._token)
-        shutil.rmtree(REPO_NAME)
+    @classmethod
+    def tearDownClass(cls) -> None:
+        cls.api.delete_repo(repo_id=cls.repo_id)
 
     def test_download_model(self):
         # Test `main` branch
-        with tempfile.TemporaryDirectory() as tmpdirname:
-            storage_folder = snapshot_download(
-                f"{USER}/{REPO_NAME}", revision="main", cache_dir=tmpdirname
-            )
+        with SoftTemporaryDirectory() as tmpdir:
+            storage_folder = snapshot_download(self.repo_id, revision="main", cache_dir=tmpdir)
 
             # folder contains the two files contributed and the .gitattributes
             folder_contents = os.listdir(storage_folder)
-            self.assertEqual(len(folder_contents), 3)
+            self.assertEqual(len(folder_contents), 4)
             self.assertTrue("dummy_file.txt" in folder_contents)
             self.assertTrue("dummy_file_2.txt" in folder_contents)
             self.assertTrue(".gitattributes" in folder_contents)
@@ -89,16 +75,16 @@ class SnapshotDownloadTests(unittest.TestCase):
             self.assertTrue(self.second_commit_hash in storage_folder)
 
         # Test with specific revision
-        with tempfile.TemporaryDirectory() as tmpdirname:
+        with SoftTemporaryDirectory() as tmpdir:
             storage_folder = snapshot_download(
-                f"{USER}/{REPO_NAME}",
+                self.repo_id,
                 revision=self.first_commit_hash,
-                cache_dir=tmpdirname,
+                cache_dir=tmpdir,
             )
 
             # folder contains the two files contributed and the .gitattributes
             folder_contents = os.listdir(storage_folder)
-            self.assertEqual(len(folder_contents), 2)
+            self.assertEqual(len(folder_contents), 3)
             self.assertTrue("dummy_file.txt" in folder_contents)
             self.assertTrue(".gitattributes" in folder_contents)
 
@@ -110,251 +96,167 @@ class SnapshotDownloadTests(unittest.TestCase):
             self.assertTrue(self.first_commit_hash in storage_folder)
 
     def test_download_private_model(self):
-        self._api.update_repo_visibility(
-            token=self._token, repo_id=REPO_NAME, private=True
-        )
+        self.api.update_repo_settings(repo_id=self.repo_id, private=True)
 
         # Test download fails without token
-        with tempfile.TemporaryDirectory() as tmpdirname:
-            with self.assertRaisesRegex(
-                requests.exceptions.HTTPError, "404 Client Error"
-            ):
-                _ = snapshot_download(
-                    f"{USER}/{REPO_NAME}", revision="main", cache_dir=tmpdirname
-                )
+        with SoftTemporaryDirectory() as tmpdir:
+            with self.assertRaises(RepositoryNotFoundError):
+                _ = snapshot_download(self.repo_id, revision="main", cache_dir=tmpdir)
 
         # Test we can download with token from cache
-        with tempfile.TemporaryDirectory() as tmpdirname:
-            HfFolder.save_token(self._token)
-            storage_folder = snapshot_download(
-                f"{USER}/{REPO_NAME}",
-                revision="main",
-                cache_dir=tmpdirname,
-                use_auth_token=True,
-            )
-
-            # folder contains the two files contributed and the .gitattributes
-            folder_contents = os.listdir(storage_folder)
-            self.assertEqual(len(folder_contents), 3)
-            self.assertTrue("dummy_file.txt" in folder_contents)
-            self.assertTrue("dummy_file_2.txt" in folder_contents)
-            self.assertTrue(".gitattributes" in folder_contents)
-
-            with open(os.path.join(storage_folder, "dummy_file.txt"), "r") as f:
-                contents = f.read()
-                self.assertEqual(contents, "v2")
-
-            # folder name contains the revision's commit sha.
-            self.assertTrue(self.second_commit_hash in storage_folder)
+        with patch("huggingface_hub.utils._headers.get_token", return_value=TOKEN):
+            with SoftTemporaryDirectory() as tmpdir:
+                storage_folder = snapshot_download(self.repo_id, revision="main", cache_dir=tmpdir)
+                self.assertTrue(self.second_commit_hash in storage_folder)
 
         # Test we can download with explicit token
-        with tempfile.TemporaryDirectory() as tmpdirname:
-            storage_folder = snapshot_download(
-                f"{USER}/{REPO_NAME}",
-                revision="main",
-                cache_dir=tmpdirname,
-                use_auth_token=self._token,
-            )
-
-            # folder contains the two files contributed and the .gitattributes
-            folder_contents = os.listdir(storage_folder)
-            self.assertEqual(len(folder_contents), 3)
-            self.assertTrue("dummy_file.txt" in folder_contents)
-            self.assertTrue("dummy_file_2.txt" in folder_contents)
-            self.assertTrue(".gitattributes" in folder_contents)
-
-            with open(os.path.join(storage_folder, "dummy_file.txt"), "r") as f:
-                contents = f.read()
-                self.assertEqual(contents, "v2")
-
-            # folder name contains the revision's commit sha.
+        with SoftTemporaryDirectory() as tmpdir:
+            storage_folder = snapshot_download(self.repo_id, revision="main", cache_dir=tmpdir, token=TOKEN)
             self.assertTrue(self.second_commit_hash in storage_folder)
 
-        self._api.update_repo_visibility(
-            token=self._token, repo_id=REPO_NAME, private=False
-        )
+        self.api.update_repo_settings(repo_id=self.repo_id, private=False)
 
     def test_download_model_local_only(self):
         # Test no branch specified
-        with tempfile.TemporaryDirectory() as tmpdirname:
+        with SoftTemporaryDirectory() as tmpdir:
             # first download folder to cache it
-            snapshot_download(f"{USER}/{REPO_NAME}", cache_dir=tmpdirname)
-
+            snapshot_download(self.repo_id, cache_dir=tmpdir)
             # now load from cache
-            storage_folder = snapshot_download(
-                f"{USER}/{REPO_NAME}",
-                cache_dir=tmpdirname,
-                local_files_only=True,
-            )
-
-            # folder contains the two files contributed and the .gitattributes
-            folder_contents = os.listdir(storage_folder)
-            self.assertEqual(len(folder_contents), 3)
-            self.assertTrue("dummy_file.txt" in folder_contents)
-            self.assertTrue("dummy_file_2.txt" in folder_contents)
-            self.assertTrue(".gitattributes" in folder_contents)
-
-            with open(os.path.join(storage_folder, "dummy_file.txt"), "r") as f:
-                contents = f.read()
-                self.assertEqual(contents, "v2")
-
-            # folder name contains the revision's commit sha.
-            self.assertTrue(self.second_commit_hash in storage_folder)
+            storage_folder = snapshot_download(self.repo_id, cache_dir=tmpdir, local_files_only=True)
+            self.assertTrue(self.second_commit_hash in storage_folder)  # has expected revision
 
         # Test with specific revision branch
-        with tempfile.TemporaryDirectory() as tmpdirname:
+        with SoftTemporaryDirectory() as tmpdir:
             # first download folder to cache it
-            snapshot_download(
-                f"{USER}/{REPO_NAME}",
-                revision="other",
-                cache_dir=tmpdirname,
-            )
-
+            snapshot_download(self.repo_id, revision="other", cache_dir=tmpdir)
             # now load from cache
-            storage_folder = snapshot_download(
-                f"{USER}/{REPO_NAME}",
-                revision="other",
-                cache_dir=tmpdirname,
-                local_files_only=True,
-            )
-
-            # folder contains the two files contributed and the .gitattributes
-            folder_contents = os.listdir(storage_folder)
-            self.assertEqual(len(folder_contents), 3)
-            self.assertTrue("dummy_file.txt" in folder_contents)
-            self.assertTrue(".gitattributes" in folder_contents)
-
-            with open(os.path.join(storage_folder, "dummy_file.txt"), "r") as f:
-                contents = f.read()
-                self.assertEqual(contents, "v2")
-
-            # folder name contains the revision's commit sha.
-            self.assertTrue(self.third_commit_hash in storage_folder)
+            storage_folder = snapshot_download(self.repo_id, revision="other", cache_dir=tmpdir, local_files_only=True)
+            self.assertTrue(self.third_commit_hash in storage_folder)  # has expected revision
 
         # Test with specific revision hash
-        with tempfile.TemporaryDirectory() as tmpdirname:
+        with SoftTemporaryDirectory() as tmpdir:
             # first download folder to cache it
-            snapshot_download(
-                f"{USER}/{REPO_NAME}",
-                revision=self.first_commit_hash,
-                cache_dir=tmpdirname,
-            )
-
+            snapshot_download(self.repo_id, revision=self.first_commit_hash, cache_dir=tmpdir)
             # now load from cache
             storage_folder = snapshot_download(
-                f"{USER}/{REPO_NAME}",
-                revision=self.first_commit_hash,
-                cache_dir=tmpdirname,
-                local_files_only=True,
+                self.repo_id, revision=self.first_commit_hash, cache_dir=tmpdir, local_files_only=True
             )
+            self.assertTrue(self.first_commit_hash in storage_folder)  # has expected revision
 
-            # folder contains the two files contributed and the .gitattributes
-            folder_contents = os.listdir(storage_folder)
-            self.assertEqual(len(folder_contents), 2)
-            self.assertTrue("dummy_file.txt" in folder_contents)
-            self.assertTrue(".gitattributes" in folder_contents)
+        # Test with local_dir
+        with SoftTemporaryDirectory() as tmpdir:
+            # first download folder to local_dir
+            snapshot_download(self.repo_id, local_dir=tmpdir)
+            # now load from local_dir
+            storage_folder = snapshot_download(self.repo_id, local_dir=tmpdir, local_files_only=True)
+            self.assertEqual(str(tmpdir), storage_folder)
 
-            with open(os.path.join(storage_folder, "dummy_file.txt"), "r") as f:
-                contents = f.read()
-                self.assertEqual(contents, "v1")
+    def test_download_model_to_local_dir_with_offline_mode(self):
+        """Test that an already downloaded folder is returned when there is a connection error"""
+        # first download folder to local_dir
+        with SoftTemporaryDirectory() as tmpdir:
+            snapshot_download(self.repo_id, local_dir=tmpdir)
+            # Check that the folder is returned when there is a connection error
+            for offline_mode in OfflineSimulationMode:
+                with offline(mode=offline_mode):
+                    storage_folder = snapshot_download(self.repo_id, local_dir=tmpdir)
+                    self.assertEqual(str(tmpdir), storage_folder)
 
-            # folder name contains the revision's commit sha.
-            self.assertTrue(self.first_commit_hash in storage_folder)
+    def test_download_model_offline_mode_not_in_local_dir(self):
+        """Test when connection error but local_dir is empty."""
+        with SoftTemporaryDirectory() as tmpdir:
+            with self.assertRaises(LocalEntryNotFoundError):
+                snapshot_download(self.repo_id, local_dir=tmpdir, local_files_only=True)
+
+        for offline_mode in OfflineSimulationMode:
+            with offline(mode=offline_mode):
+                with SoftTemporaryDirectory() as tmpdir:
+                    with self.assertRaises(LocalEntryNotFoundError):
+                        snapshot_download(self.repo_id, local_dir=tmpdir)
+
+    def test_download_model_offline_mode_not_cached(self):
+        """Test when connection error but cache is empty."""
+        with SoftTemporaryDirectory() as tmpdir:
+            with self.assertRaises(LocalEntryNotFoundError):
+                snapshot_download(self.repo_id, cache_dir=tmpdir, local_files_only=True)
+
+        for offline_mode in OfflineSimulationMode:
+            with offline(mode=offline_mode):
+                with SoftTemporaryDirectory() as tmpdir:
+                    with self.assertRaises(LocalEntryNotFoundError):
+                        snapshot_download(self.repo_id, cache_dir=tmpdir)
 
     def test_download_model_local_only_multiple(self):
-        # Test `main` branch
-        with tempfile.TemporaryDirectory() as tmpdirname:
-            # download both from branch and from commit
-            snapshot_download(
-                f"{USER}/{REPO_NAME}",
-                cache_dir=tmpdirname,
-            )
-
-            snapshot_download(
-                f"{USER}/{REPO_NAME}",
-                revision=self.first_commit_hash,
-                cache_dir=tmpdirname,
-            )
-
-            # now load from cache and make sure warning to be raised
-            with self.assertWarns(Warning):
-                snapshot_download(
-                    f"{USER}/{REPO_NAME}",
-                    cache_dir=tmpdirname,
-                    local_files_only=True,
-                )
-
         # cache multiple commits and make sure correct commit is taken
-        with tempfile.TemporaryDirectory() as tmpdirname:
-            # first download folder to cache it
-            snapshot_download(
-                f"{USER}/{REPO_NAME}",
-                cache_dir=tmpdirname,
-            )
-
-            # now load folder from another branch
-            snapshot_download(
-                f"{USER}/{REPO_NAME}",
-                revision="other",
-                cache_dir=tmpdirname,
-            )
+        with SoftTemporaryDirectory() as tmpdir:
+            # download folder from main and other to cache it
+            snapshot_download(self.repo_id, cache_dir=tmpdir)
+            snapshot_download(self.repo_id, revision="other", cache_dir=tmpdir)
 
             # now make sure that loading "main" branch gives correct branch
-            storage_folder = snapshot_download(
-                f"{USER}/{REPO_NAME}",
-                cache_dir=tmpdirname,
-                local_files_only=True,
-            )
-
-            # folder contains the two files contributed and the .gitattributes
-            folder_contents = os.listdir(storage_folder)
-            self.assertEqual(len(folder_contents), 3)
-            self.assertTrue("dummy_file.txt" in folder_contents)
-            self.assertTrue(".gitattributes" in folder_contents)
-
-            with open(os.path.join(storage_folder, "dummy_file.txt"), "r") as f:
-                contents = f.read()
-                self.assertEqual(contents, "v2")
-
             # folder name contains the 2nd commit sha and not the 3rd
+            storage_folder = snapshot_download(self.repo_id, cache_dir=tmpdir, local_files_only=True)
             self.assertTrue(self.second_commit_hash in storage_folder)
 
-    def check_download_model_with_regex(self, regex, allow=True):
+    def check_download_model_with_pattern(self, pattern, allow=True):
         # Test `main` branch
-        allow_regex = regex if allow else None
-        ignore_regex = regex if not allow else None
+        allow_patterns = pattern if allow else None
+        ignore_patterns = pattern if not allow else None
 
-        with tempfile.TemporaryDirectory() as tmpdirname:
+        with SoftTemporaryDirectory() as tmpdir:
             storage_folder = snapshot_download(
-                f"{USER}/{REPO_NAME}",
+                self.repo_id,
                 revision="main",
-                cache_dir=tmpdirname,
-                allow_regex=allow_regex,
-                ignore_regex=ignore_regex,
+                cache_dir=tmpdir,
+                allow_patterns=allow_patterns,
+                ignore_patterns=ignore_patterns,
             )
 
-            # folder contains the two files contributed and the .gitattributes
+            # folder contains the three text files but not the .gitattributes
             folder_contents = os.listdir(storage_folder)
-            self.assertEqual(len(folder_contents), 2)
+            self.assertEqual(len(folder_contents), 3)
             self.assertTrue("dummy_file.txt" in folder_contents)
             self.assertTrue("dummy_file_2.txt" in folder_contents)
             self.assertTrue(".gitattributes" not in folder_contents)
 
-            with open(os.path.join(storage_folder, "dummy_file.txt"), "r") as f:
-                contents = f.read()
-                self.assertEqual(contents, "v2")
+    def test_download_model_with_allow_pattern(self):
+        self.check_download_model_with_pattern("*.txt")
 
-            # folder name contains the revision's commit sha.
-            self.assertTrue(self.second_commit_hash in storage_folder)
+    def test_download_model_with_allow_pattern_list(self):
+        self.check_download_model_with_pattern(["dummy_file.txt", "dummy_file_2.txt", "subpath/*"])
 
-    def test_download_model_with_allow_regex(self):
-        self.check_download_model_with_regex("*.txt")
+    def test_download_model_with_ignore_pattern(self):
+        self.check_download_model_with_pattern(".gitattributes", allow=False)
 
-    def test_download_model_with_allow_regex_list(self):
-        self.check_download_model_with_regex(["dummy_file.txt", "dummy_file_2.txt"])
+    def test_download_model_with_ignore_pattern_list(self):
+        self.check_download_model_with_pattern(["*.git*", "*.pt"], allow=False)
 
-    def test_download_model_with_ignore_regex(self):
-        self.check_download_model_with_regex(".gitattributes", allow=False)
+    def test_download_to_local_dir(self) -> None:
+        """Download a repository to local dir.
 
-    def test_download_model_with_ignore_regex_list(self):
-        self.check_download_model_with_regex(["*.git*", "*.pt"], allow=False)
+        Cache dir is not used.
+        Symlinks are not used.
+
+        This test is here to check once the normal behavior with snapshot_download.
+        More individual tests exists in `test_file_download.py`.
+        """
+        with SoftTemporaryDirectory() as cache_dir:
+            with SoftTemporaryDirectory() as local_dir:
+                returned_path = snapshot_download(self.repo_id, cache_dir=cache_dir, local_dir=local_dir)
+
+                # Files have been downloaded in correct structure
+                assert (Path(local_dir) / "dummy_file.txt").is_file()
+                assert (Path(local_dir) / "dummy_file_2.txt").is_file()
+                assert (Path(local_dir) / "subpath" / "file.txt").is_file()
+
+                # Symlinks are not used anymore
+                assert not (Path(local_dir) / "dummy_file.txt").is_symlink()
+                assert not (Path(local_dir) / "dummy_file_2.txt").is_symlink()
+                assert not (Path(local_dir) / "subpath" / "file.txt").is_symlink()
+
+                # Check returns local dir and not cache dir
+                assert Path(returned_path).resolve() == Path(local_dir).resolve()
+
+                # Nothing has been added to cache dir (except some subfolders created)
+                for path in cache_dir.glob("*"):
+                    assert path.is_dir()
