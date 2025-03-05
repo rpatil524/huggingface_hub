@@ -1,45 +1,142 @@
-# `huggingface_hub`
-
----
-**NOTE**
-
-The `huggingface_hub` repository is currently being split in three repositories as mentioned in the following
-[issue](https://github.com/huggingface/huggingface_hub/issues/744).
-
-As such, the `js`, `docs`, `tasks`, and `api-inference-community` folders are currently frozen and we instead ask
-you to redirect your issues/PRs to the following repositories:
-
-- for `js`, `docs` and `tasks`: [huggingface/hub-docs](https://github.com/huggingface/hub-docs)
-- for `api-inference-community`: [huggingface/api-inference-community](https://github.com/huggingface/api-inference-community)
-
----
-
-
-## Welcome to the Hub repo! Here you can find all the open source things related to the Hugging Face Hub.
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="https://huggingface.co/datasets/huggingface/documentation-images/raw/main/huggingface_hub-dark.svg">
+    <source media="(prefers-color-scheme: light)" srcset="https://huggingface.co/datasets/huggingface/documentation-images/raw/main/huggingface_hub.svg">
+    <img alt="huggingface_hub library logo" src="https://huggingface.co/datasets/huggingface/documentation-images/raw/main/huggingface_hub.svg" width="352" height="59" style="max-width: 100%;">
+  </picture>
+  <br/>
+  <br/>
+</p> 
 
 <p align="center">
-	<img alt="Build" src="https://github.com/huggingface/huggingface_hub/workflows/Python%20tests/badge.svg">
-	<a href="https://github.com/huggingface/huggingface_hub/blob/master/LICENSE">
-		<img alt="GitHub" src="https://img.shields.io/github/license/huggingface/huggingface_hub.svg?color=blue">
-	</a>
-	<a href="https://github.com/huggingface/huggingface_hub/releases">
-		<img alt="GitHub release" src="https://img.shields.io/github/release/huggingface/huggingface_hub.svg">
-	</a>
+    <i>The official Python client for the Huggingface Hub.</i>
 </p>
 
-What can you find in this repo?
+<p align="center">
+    <a href="https://huggingface.co/docs/huggingface_hub/en/index"><img alt="Documentation" src="https://img.shields.io/website/http/huggingface.co/docs/huggingface_hub/index.svg?down_color=red&down_message=offline&up_message=online&label=doc"></a>
+    <a href="https://github.com/huggingface/huggingface_hub/releases"><img alt="GitHub release" src="https://img.shields.io/github/release/huggingface/huggingface_hub.svg"></a>
+    <a href="https://github.com/huggingface/huggingface_hub"><img alt="PyPi version" src="https://img.shields.io/pypi/pyversions/huggingface_hub.svg"></a>
+    <a href="https://pypi.org/project/huggingface-hub"><img alt="PyPI - Downloads" src="https://img.shields.io/pypi/dm/huggingface_hub"></a>
+    <a href="https://codecov.io/gh/huggingface/huggingface_hub"><img alt="Code coverage" src="https://codecov.io/gh/huggingface/huggingface_hub/branch/main/graph/badge.svg?token=RXP95LE2XL"></a>
+</p>
 
-* [`huggingface_hub`](https://github.com/huggingface/huggingface_hub/tree/main/src/huggingface_hub), a client library to download and publish on the Hugging Face Hub as well as extracting useful information from there.
-* [`api-inference-community`](https://github.com/huggingface/huggingface_hub/tree/main/api-inference-community), the Inference API for open source machine learning libraries.
-* [`js`](https://github.com/huggingface/huggingface_hub/tree/main/js), the open sourced widgets that allow people to try out the models in the browser.
-  * [`interfaces`](https://github.com/huggingface/huggingface_hub/tree/main/js/src/lib/interfaces), Typescript definition files for the Hugging Face Hub.
-* [`docs`](https://github.com/huggingface/huggingface_hub/tree/main/docs), containing the official [Hugging Face Hub documentation](https://hf.co/docs).
+<h4 align="center">
+    <p>
+        <b>English</b> |
+        <a href="https://github.com/huggingface/huggingface_hub/blob/main/i18n/README_de.md">Deutsch</a> |
+        <a href="https://github.com/huggingface/huggingface_hub/blob/main/i18n/README_hi.md">हिंदी</a> |
+        <a href="https://github.com/huggingface/huggingface_hub/blob/main/i18n/README_ko.md">한국어</a> |
+        <a href="https://github.com/huggingface/huggingface_hub/blob/main/i18n/README_cn.md">中文（简体）</a>
+    <p>
+</h4>
 
-## The `huggingface_hub` client library
+---
 
-This library allows anyone to work with the Hub repositories: you can clone them, create them and upload your models to them. On top of this, the library also offers methods to access information from the Hub. For example, listing all models that meet specific criteria or get all the files from a specific repo. You can find the library implementation [here](https://github.com/huggingface/huggingface_hub/tree/main/src/huggingface_hub).
+**Documentation**: <a href="https://hf.co/docs/huggingface_hub" target="_blank">https://hf.co/docs/huggingface_hub</a>
 
-<br>
+**Source Code**: <a href="https://github.com/huggingface/huggingface_hub" target="_blank">https://github.com/huggingface/huggingface_hub</a>
+
+---
+
+## Welcome to the huggingface_hub library
+
+The `huggingface_hub` library allows you to interact with the [Hugging Face Hub](https://huggingface.co/), a platform democratizing open-source Machine Learning for creators and collaborators. Discover pre-trained models and datasets for your projects or play with the thousands of machine learning apps hosted on the Hub. You can also create and share your own models, datasets and demos with the community. The `huggingface_hub` library provides a simple way to do all these things with Python.
+
+## Key features
+
+- [Download files](https://huggingface.co/docs/huggingface_hub/en/guides/download) from the Hub.
+- [Upload files](https://huggingface.co/docs/huggingface_hub/en/guides/upload) to the Hub.
+- [Manage your repositories](https://huggingface.co/docs/huggingface_hub/en/guides/repository).
+- [Run Inference](https://huggingface.co/docs/huggingface_hub/en/guides/inference) on deployed models.
+- [Search](https://huggingface.co/docs/huggingface_hub/en/guides/search) for models, datasets and Spaces.
+- [Share Model Cards](https://huggingface.co/docs/huggingface_hub/en/guides/model-cards) to document your models.
+- [Engage with the community](https://huggingface.co/docs/huggingface_hub/en/guides/community) through PRs and comments.
+
+## Installation
+
+Install the `huggingface_hub` package with [pip](https://pypi.org/project/huggingface-hub/):
+
+```bash
+pip install huggingface_hub
+```
+
+If you prefer, you can also install it with [conda](https://huggingface.co/docs/huggingface_hub/en/installation#install-with-conda).
+
+In order to keep the package minimal by default, `huggingface_hub` comes with optional dependencies useful for some use cases. For example, if you want have a complete experience for Inference, run:
+
+```bash
+pip install huggingface_hub[inference]
+```
+
+To learn more installation and optional dependencies, check out the [installation guide](https://huggingface.co/docs/huggingface_hub/en/installation).
+
+## Quick start
+
+### Download files
+
+Download a single file
+
+```py
+from huggingface_hub import hf_hub_download
+
+hf_hub_download(repo_id="tiiuae/falcon-7b-instruct", filename="config.json")
+```
+
+Or an entire repository
+
+```py
+from huggingface_hub import snapshot_download
+
+snapshot_download("stabilityai/stable-diffusion-2-1")
+```
+
+Files will be downloaded in a local cache folder. More details in [this guide](https://huggingface.co/docs/huggingface_hub/en/guides/manage-cache).
+
+### Login
+
+The Hugging Face Hub uses tokens to authenticate applications (see [docs](https://huggingface.co/docs/hub/security-tokens)). To log in your machine, run the following CLI:
+
+```bash
+huggingface-cli login
+# or using an environment variable
+huggingface-cli login --token $HUGGINGFACE_TOKEN
+```
+
+### Create a repository
+
+```py
+from huggingface_hub import create_repo
+
+create_repo(repo_id="super-cool-model")
+```
+
+### Upload files
+
+Upload a single file
+
+```py
+from huggingface_hub import upload_file
+
+upload_file(
+    path_or_fileobj="/home/lysandre/dummy-test/README.md",
+    path_in_repo="README.md",
+    repo_id="lysandre/test-model",
+)
+```
+
+Or an entire folder
+
+```py
+from huggingface_hub import upload_folder
+
+upload_folder(
+    folder_path="/path/to/local/space",
+    repo_id="username/my-cool-space",
+    repo_type="space",
+)
+```
+
+For details in the [upload guide](https://huggingface.co/docs/huggingface_hub/en/guides/upload).
 
 ## Integrating to the Hub.
 
@@ -47,9 +144,9 @@ We're partnering with cool open source ML libraries to provide free model hostin
 
 The advantages are:
 
-- Free model hosting for libraries and their users.
+- Free model or dataset hosting for libraries and their users.
 - Built-in file versioning, even with very large files, thanks to a git-based approach.
-- Hosted inference API for all models publicly available.
+- Serverless inference API for all models publicly available.
 - In-browser widgets to play with the uploaded models.
 - Anyone can upload a new model for your library, they just need to add the corresponding tag for the model to be discoverable.
 - Fast downloads! We use Cloudfront (a CDN) to geo-replicate downloads so they're blazing fast from anywhere on the globe.
@@ -57,35 +154,9 @@ The advantages are:
 
 If you would like to integrate your library, feel free to open an issue to begin the discussion. We wrote a [step-by-step guide](https://huggingface.co/docs/hub/adding-a-library) with ❤️ showing how to do this integration.
 
-<br>
+## Contributions (feature requests, bugs, etc.) are super welcome 💙💚💛💜🧡❤️
 
-## Inference API integration into the Hugging Face Hub
-
-In order to get a functional Inference API on the Hub for your models (and thus, cool working widgets!) check out this [doc](https://github.com/huggingface/huggingface_hub/tree/main/api-inference-community). There is a docker image for each library. Within the image, you can find the implementation for supported pipelines for the given library.
-
-<br>
-
-
-## Widgets
-
-All our widgets are open-sourced. Feel free to propose and implement widgets. You can try all of them out [here](https://huggingface-widgets.netlify.app/).
-
-
-<br>
-
-## Code Snippets
-
-We'll implement a few tweaks to improve the UX for your models on the website – let's use [Asteroid](https://github.com/asteroid-team/asteroid) as an example.
-
-Model authors add an `asteroid` tag to their model card and they get the advantages of model versioning built-in
-
-![asteroid-model](docs/assets/asteroid_repo.png)
-
-We add a custom "Use in Asteroid" button. When clicked, you get a library-specific code sample that you'll be able to specify. 🔥
-
-![asteroid-code-sample](docs/assets/asteroid_snippet.png)
-
-
-<br>
-
-## Feedback (feature requests, bugs, etc.) is super welcome 💙💚💛💜♥️🧡
+Everyone is welcome to contribute, and we value everybody's contribution. Code is not the only way to help the community.
+Answering questions, helping others, reaching out and improving the documentations are immensely valuable to the community.
+We wrote a [contribution guide](https://github.com/huggingface/huggingface_hub/blob/main/CONTRIBUTING.md) to summarize
+how to get started to contribute to this repository.
